@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CinéDuo — Escolham juntos</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0b14;
+    --surface: #16121f;
+    --card: #1e1830;
+    --accent: #c94fff;
+    --accent2: #ff6b6b;
+    --gold: #ffd166;
+    --text: #f0eaf8;
+    --muted: #7b6e99;
+    --like: #2ecc71;
+    --nope: #e74c3c;
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ── LOBBY ── */
+  #lobby {
+    text-align: center;
+    padding: 2rem;
+    max-width: 480px;
+    width: 100%;
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.2rem;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: .3rem;
+  }
+  .tagline { color: var(--muted); font-size: .9rem; margin-bottom: 2.5rem; font-weight: 300; letter-spacing: 1px; }
+
+  .card-lobby {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 2rem;
+    border: 1px solid rgba(201,79,255,.18);
+    margin-bottom: 1.2rem;
+  }
+  .card-lobby h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 1.2rem; }
+
+  .input-group { display: flex; gap: .7rem; }
+  input[type="text"] {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  .btn {
+    background: linear-gradient(135deg, var(--accent), #8a2be2);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .75rem 1.4rem;
+    font-family: 'Inter', sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    white-space: nowrap;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:active { transform: scale(.97); }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+  }
+  .btn-outline:hover { background: rgba(201,79,255,.1); }
+
+  .divider { display: flex; align-items: center; gap: 1rem; color: var(--muted); font-size: .8rem; margin: 1rem 0; }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background: rgba(255,255,255,.07); }
+
+  .room-display {
+    background: var(--card);
+    border-radius: 10px;
+    padding: .9rem 1rem;
+    font-size: 1.4rem;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 6px;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: .8rem;
+    border: 1px dashed rgba(255,209,102,.3);
+  }
+
+  /* ── WAITING ── */
+  #waiting {
+    text-align: center;
+    padding: 2rem;
+  }
+  .pulse-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(201,79,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    position: relative;
+    animation: pulse 2s infinite;
+  }
+  .pulse-ring::before {
+    content:'';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 2px solid rgba(201,79,255,.3);
+    animation: pulse 2s infinite .5s;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:.8} 50%{transform:scale(1.08);opacity:1} }
+  .pulse-ring span { font-size: 2.5rem; }
+
+  /* ── GAME ── */
+  #game { display: none; width: 100%; max-width: 420px; padding: 1rem; }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 .3rem;
+  }
+  .player-badge {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--surface);
+    border-radius: 30px;
+    padding: .4rem .9rem;
+    font-size: .8rem;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,.07);
+  }
+  .player-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-p1 { background: var(--accent); }
+  .dot-p2 { background: var(--accent2); }
+
+  .progress-info { font-size: .75rem; color: var(--muted); text-align: center; }
+  .progress-bar {
+    height: 3px;
+    background: rgba(255,255,255,.07);
+    border-radius: 3px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+    transition: width .4s;
+  }
+
+  /* ── CARD STACK ── */
+  .card-stack {
+    position: relative;
+    height: 540px;
+    margin-bottom: 1.2rem;
+  }
+  .movie-card {
+    position: absolute;
+    inset: 0;
+    background: var(--card);
+    border-radius: 24px;
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow .3s;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    will-change: transform;
+  }
+  .movie-card:active { cursor: grabbing; }
+  .movie-card.behind-1 {
+    transform: scale(.95) translateY(12px);
+    z-index: 1;
+    pointer-events: none;
+    filter: brightness(.7);
+  }
+  .movie-card.behind-2 {
+    transform: scale(.9) translateY(22px);
+    z-index: 0;
+    pointer-events: none;
+    filter: brightness(.5);
+  }
+  .movie-card.top { z-index: 10; }
+
+  .card-poster {
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+    display: block;
+    background: linear-gradient(135deg, #2a1f3d, #1a1230);
+  }
+  .poster-placeholder {
+    width: 100%;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    background: linear-gradient(135deg, #2a1f3d, #1a1230);
+  }
+  .card-body {
+    padding: 1.2rem 1.4rem 1.4rem;
+  }
+  .card-meta {
+    display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem;
+  }
+  .genre-tag {
+    background: rgba(201,79,255,.15);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: .15rem .6rem;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .5px;
+  }
+  .year-tag { color: var(--muted); font-size: .75rem; }
+  .rating { margin-left: auto; display: flex; align-items: center; gap: .3rem; font-size: .8rem; color: var(--gold); font-weight: 600; }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.7rem;
+    letter-spacing: 1px;
+    margin-bottom: .4rem;
+    line-height: 1.1;
+  }
+  .card-synopsis {
+    font-size: .8rem;
+    color: var(--muted);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* swipe indicators */
+  .swipe-indicator {
+    position: absolute;
+    top: 1.5rem;
+    padding: .4rem 1rem;
+    border-radius: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    opacity: 0;
+    transition: opacity .1s;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .like-indicator {
+    left: 1.5rem;
+    background: rgba(46,204,113,.15);
+    border: 2px solid var(--like);
+    color: var(--like);
+    transform: rotate(-12deg);
+  }
+  .nope-indicator {
+    right: 1.5rem;
+    background: rgba(231,76,60,.15);
+    border: 2px solid var(--nope);
+    color: var(--nope);
+    transform: rotate(12deg);
+  }
+
+  /* ── BUTTONS ── */
+  .action-btns {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .action-btn {
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer;
+    border-radius: 50%;
+    transition: transform .15s, box-shadow .15s;
+    font-size: 1.6rem;
+  }
+  .action-btn:hover { transform: scale(1.1); }
+  .action-btn:active { transform: scale(.95); }
+  .btn-nope {
+    width: 64px; height: 64px;
+    background: rgba(231,76,60,.12);
+    border: 2px solid rgba(231,76,60,.4);
+    color: var(--nope);
+  }
+  .btn-like {
+    width: 72px; height: 72px;
+    background: rgba(46,204,113,.12);
+    border: 2px solid rgba(46,204,113,.4);
+    color: var(--like);
+    font-size: 1.9rem;
+  }
+  .btn-nope:hover { background: rgba(231,76,60,.22); border-color: var(--nope); }
+  .btn-like:hover { background: rgba(46,204,113,.22); border-color: var(--like); }
+
+  /* partner status */
+  .partner-status {
+    text-align: center;
+    font-size: .75rem;
+    color: var(--muted);
+    margin-bottom: .7rem;
+    height: 18px;
+  }
+  .partner-voted { color: var(--gold); font-weight: 500; }
+
+  /* ── MATCH OVERLAY ── */
+  #match-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+    text-align: center;
+  }
+  #match-overlay.show { display: flex; animation: fadeIn .4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:scale(1)} }
+
+  .match-emoji { font-size: 4rem; margin-bottom: .5rem; }
+  .match-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--gold), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: .5rem;
+  }
+  .match-subtitle { color: var(--muted); margin-bottom: 1.5rem; font-size: .9rem; }
+  .match-poster {
+    width: 140px;
+    height: 200px;
+    border-radius: 14px;
+    object-fit: cover;
+    box-shadow: 0 0 40px rgba(201,79,255,.5);
+    margin-bottom: 1rem;
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem;
+    overflow: hidden;
+  }
+  .match-movie-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+  }
+  .match-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+  /* ── DONE SCREEN ── */
+  #done-screen {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    max-width: 420px;
+    width: 100%;
+  }
+  .matches-list { margin-top: 1.5rem; display: flex; flex-direction: column; gap: .8rem; max-height: 50vh; overflow-y: auto; }
+  .match-item {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 1rem;
+    display: flex; gap: 1rem; align-items: center;
+    border: 1px solid rgba(255,209,102,.15);
+    text-align: left;
+  }
+  .match-item-poster {
+    width: 50px; height: 70px; border-radius: 8px;
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; flex-shrink: 0;
+    overflow: hidden;
+  }
+  .match-item img { width: 100%; height: 100%; object-fit: cover; }
+  .match-item-info h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; }
+  .match-item-info p { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
+
+  .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 99; }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(30,24,48,.95);
+    border: 1px solid rgba(201,79,255,.3);
+    color: var(--text);
+    padding: .7rem 1.4rem;
+    border-radius: 30px;
+    font-size: .85rem;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ══ LOBBY ══ -->
+<div id="lobby">
+  <div class="logo">🎬 CinéDuo</div>
+  <div class="tagline">escolham juntos o próximo filme</div>
+
+  <div class="card-lobby">
+    <h3>Criar nova sala</h3>
+    <input type="text" id="create-name" placeholder="Seu apelido (ex: Maria)" maxlength="16">
+    <div style="margin-top:.8rem">
+      <button class="btn" style="width:100%" onclick="createRoom()">Criar sala</button>
+    </div>
+  </div>
+
+  <div class="card-lobby">
+    <h3>Entrar em sala existente</h3>
+    <input type="text" id="join-name" placeholder="Seu apelido (ex: João)" maxlength="16" style="margin-bottom:.8rem; display:block; width:100%">
+    <div class="input-group">
+      <input type="text" id="join-code" placeholder="Código da sala" maxlength="6" style="text-transform:uppercase; letter-spacing:3px; font-size:1rem">
+      <button class="btn" onclick="joinRoom()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WAITING ══ -->
+<div id="waiting" class="hidden">
+  <div class="pulse-ring"><span>🎭</span></div>
+  <h2 style="font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:2px; margin-bottom:.5rem">Aguardando parceiro(a)…</h2>
+  <p style="color:var(--muted); font-size:.9rem; margin-bottom:1.5rem">Compartilhe o código da sala:</p>
+  <div class="room-display" id="waiting-code">—</div>
+  <button class="btn btn-outline" style="width:100%; margin-bottom:.8rem" onclick="copyCode()">Copiar código</button>
+  <button class="btn" style="width:100%; background:transparent; border:1px solid rgba(255,255,255,.1); color:var(--muted)" onclick="resetApp()">Cancelar</button>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game">
+  <div class="game-header">
+    <div class="player-badge">
+      <div class="player-dot dot-p1"></div>
+      <span id="p1-name">Você</span>
+    </div>
+    <div class="progress-info" id="progress-info">0 / 20 filmes</div>
+    <div class="player-badge">
+      <div class="player-dot dot-p2"></div>
+      <span id="p2-name">Parceiro</span>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <div class="partner-status" id="partner-status"></div>
+
+  <div class="card-stack" id="card-stack"></div>
+
+  <div class="action-btns">
+    <button class="action-btn btn-nope" onclick="swipe('left')" title="Não quero">✕</button>
+    <button class="action-btn btn-like" onclick="swipe('right')" title="Quero ver!">♥</button>
+  </div>
+  <p style="text-align:center; color:var(--muted); font-size:.72rem; margin-top:.7rem">← não quero &nbsp;|&nbsp; quero ver →</p>
+</div>
+
+<!-- ══ DONE ══ -->
+<div id="done-screen">
+  <div style="font-size:3rem; margin-bottom:.5rem">🎉</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:2px; margin-bottom:.5rem">Sessão concluída!</h2>
+  <p id="done-desc" style="color:var(--muted); font-size:.9rem; margin-bottom:1rem"></p>
+  <div class="matches-list" id="matches-list"></div>
+  <button class="btn" style="width:100%; margin-top:1.5rem" onclick="resetApp()">Nova sessão</button>
+</div>
+
+<!-- ══ MATCH OVERLAY ══ -->
+<div id="match-overlay">
+  <div class="confetti-wrap" id="confetti-wrap"></div>
+  <div class="match-emoji">💕</div>
+  <div class="match-title">É um Match!</div>
+  <div class="match-subtitle" id="match-subtitle">Vocês dois querem assistir</div>
+  <div class="match-poster" id="match-poster-el">🎬</div>
+  <div class="match-movie-title" id="match-movie-title-el"></div>
+  <div class="match-actions">
+    <button class="btn" onclick="closeMatch()">Continuar vendo filmes</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// MOVIES DATABASE
+// ══════════════════════════════════════
+const MOVIES = [
+  { id:1, title:"Interestelar", year:2014, genre:"Ficção Científica", rating:"9.0", emoji:"🚀", synopsis:"Um grupo de exploradores viaja por um buraco de minhoca no espaço em uma tentativa de garantir a sobrevivência da humanidade." },
+  { id:2, title:"Parasita", year:2019, genre:"Thriller", rating:"8.6", emoji:"🏠", synopsis:"A família Kim, todos desempregados, começa a se infiltrar na rica família Park. Um plano meticuloso e irônico que vai além do que imaginam." },
+  { id:3, title:"Piratas do Caribe", year:2003, genre:"Aventura", rating:"8.0", emoji:"⚓", synopsis:"Um ferreiro se une a um excêntrico pirata para resgatar uma jovem das garras de um tripulação de piratas amaldiçoados." },
+  { id:4, title:"Gravidade", year:2013, genre:"Ficção Científica", rating:"7.7", emoji:"🌍", synopsis:"Uma engenheira médica e um astronauta trabalham juntos para sobreviver depois que um acidente os deixa à deriva no espaço." },
+  { id:5, title:"Coco", year:2017, genre:"Animação", rating:"8.4", emoji:"💀", synopsis:"Sonhando em se tornar um músico famoso, Miguel se encontra na Terra dos Mortos e parte em busca do seu ídolo." },
+  { id:6, title:"Coringa", year:2019, genre:"Drama", rating:"8.4", emoji:"🃏", synopsis:"Arthur Fleck, um comediante fracassado em Gotham City, lentamente entra em loucura e se torna o famigerado Coringa." },
+  { id:7, title:"A Origem", year:2010, genre:"Ficção Científica", rating:"8.8", emoji:"🌀", synopsis:"Um ladrão especializado em roubar segredos do subconsciente recebe uma chance de limpar seu nome se conseguir implantar uma ideia." },
+  { id:8, title:"Clube da Luta", year:1999, genre:"Thriller", rating:"8.8", emoji:"👊", synopsis:"Um homem insatisfeito e um fabricante de sabonetes carismático formam um clube de luta que evolui para algo muito maior." },
+  { id:9, title:"Titanic", year:1997, genre:"Romance", rating:"7.9", emoji:"🚢", synopsis:"Um amor impossível nasce a bordo do Titanic entre Jack, um jovem artista, e Rose, uma jovem de classe alta noivada." },
+  { id:10, title:"Vingadores: Ultimato", year:2019, genre:"Ação", rating:"8.4", emoji:"⚡", synopsis:"Os Vingadores sobreviventes montam um plano para desfazer as ações de Thanos e restaurar a ordem no universo." },
+  { id:11, title:"Divertida Mente", year:2015, genre:"Animação", rating:"8.2", emoji:"🧠", synopsis:"As emoções de Riley entram em conflito quando ela e sua família se mudam para uma cidade nova, causando caos em sua mente." },
+  { id:12, title:"O Poderoso Chefão", year:1972, genre:"Drama", rating:"9.2", emoji:"🌹", synopsis:"O patriarca de uma dinastia do crime organizado transfere o controle de seu império para seu filho mais novo e relutante." },
+  { id:13, title:"Bohemian Rhapsody", year:2018, genre:"Biografia", rating:"7.9", emoji:"🎸", synopsis:"A história da banda britânica Queen, da formação até seu retorno histórico no Live Aid em 1985." },
+  { id:14, title:"Oppenheimer", year:2023, genre:"Biografia", rating:"8.6", emoji:"☢️", synopsis:"A história do físico americano J. Robert Oppenheimer e seu papel no Projeto Manhattan e no desenvolvimento da bomba atômica." },
+  { id:15, title:"Barbie", year:2023, genre:"Comédia", rating:"7.0", emoji:"👱‍♀️", synopsis:"Barbie e Ken viajam do mundo perfeito de Barbieland ao mundo real para descobrir o propósito da vida." },
+  { id:16, title:"O Senhor dos Anéis", year:2001, genre:"Fantasia", rating:"8.8", emoji:"💍", synopsis:"Um hobbit ingênuo e seus companheiros partem em uma jornada para destruir um anel poderoso e salvar a Terra Média." },
+  { id:17, title:"Missão: Impossível", year:1996, genre:"Ação", rating:"7.1", emoji:"🕵️", synopsis:"Um agente secreto é suspeito de traição e precisa limpar seu nome enquanto persegue o verdadeiro traidor." },
+  { id:18, title:"La La Land", year:2016, genre:"Musical", rating:"8.0", emoji:"✨", synopsis:"Um pianista de jazz e uma aspirante a atriz se apaixonam em Los Angeles enquanto perseguem seus sonhos." },
+  { id:19, title:"Venom", year:2018, genre:"Ação", rating:"6.7", emoji:"🕷️", synopsis:"O jornalista Eddie Brock adquire superpoderes ao ser fundido com um alienígena simbionte chamado Venom." },
+  { id:20, title:"Matrix", year:1999, genre:"Ficção Científica", rating:"8.7", emoji:"💊", synopsis:"Um hacker descobre que a realidade que conhece é uma simulação e é recrutado para lutar contra máquinas que escravizam a humanidade." },
+];
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let state = {
+  roomId: null,
+  myId: null,
+  myName: '',
+  partnerName: '',
+  isHost: false,
+  movies: [],
+  currentIndex: 0,
+  myVotes: {},       // movieId -> 'like'|'nope'
+  partnerVotes: {},  // movieId -> 'like'|'nope'
+  matches: [],
+  phase: 'lobby',    // lobby | waiting | game | done
+};
+
+let dragState = null;
+let pollTimer = null;
+
+// ══════════════════════════════════════
+// ROOM / STORAGE (localStorage as "backend")
+// ══════════════════════════════════════
+function genCode() {
+  return Math.random().toString(36).substr(2,6).toUpperCase();
+}
+
+function saveRoom(data) {
+  localStorage.setItem('cineduo_room_' + data.id, JSON.stringify(data));
+}
+function loadRoom(id) {
+  const d = localStorage.getItem('cineduo_room_' + id);
+  return d ? JSON.parse(d) : null;
+}
+
+function createRoom() {
+  const name = document.getElementById('create-name').value.trim();
+  if (!name) { showToast('Digite seu apelido primeiro!'); return; }
+  const code = genCode();
+  const room = {
+    id: code,
+    host: { name, votes: {} },
+    guest: null,
+    movies: shuffleArr([...MOVIES]).slice(0, 20).map(m => m.id),
+    created: Date.now(),
+  };
+  saveRoom(room);
+  state.roomId = code;
+  state.myId = 'host';
+  state.myName = name;
+  state.isHost = true;
+  state.movies = room.movies.map(id => MOVIES.find(m => m.id === id));
+  showPhase('waiting');
+  document.getElementById('waiting-code').textContent = code;
+  startPolling();
+}
+
+function joinRoom() {
+  const name = document.getElementById('join-name').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!name) { showToast('Digite seu apelido!'); return; }
+  if (code.length < 4) { showToast('Digite o código da sala!'); return; }
+  const room = loadRoom(code);
+  if (!room) { showToast('Sala não encontrada. Verifique o código.'); return; }
+  if (room.guest) { showToast('Essa sala já está cheia!'); return; }
+  room.guest = { name, votes: {} };
+  saveRoom(room);
+  state.roomId = code;
+  state.myId = 'guest';
+  state.myName = name;
+  state.partnerName = room.host.name;
+  state.isHost = false;
+  state.movies = room.movies.map(id => MOVIES.find(m => m.id === id));
+  startGame();
+}
+
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    const room = loadRoom(state.roomId);
+    if (!room) return;
+    if (state.phase === 'waiting' && room.guest) {
+      state.partnerName = room.guest.name;
+      clearInterval(pollTimer);
+      startGame();
+    }
+    if (state.phase === 'game') {
+      syncPartnerVotes(room);
+    }
+  }, 800);
+}
+
+function syncPartnerVotes(room) {
+  const partner = state.myId === 'host' ? room.guest : room.host;
+  if (!partner) return;
+  const pv = partner.votes || {};
+  let newMatch = false;
+  Object.keys(pv).forEach(id => {
+    const mid = parseInt(id);
+    if (pv[id] === 'like' && state.myVotes[mid] === 'like' && !state.partnerVotes[mid]) {
+      // new match!
+      const movie = MOVIES.find(m => m.id === mid);
+      if (movie && !state.matches.find(m => m.id === mid)) {
+        state.matches.push(movie);
+        newMatch = movie;
+      }
+    }
+    state.partnerVotes[mid] = pv[id];
+  });
+  if (newMatch) showMatchOverlay(newMatch);
+  updatePartnerStatus();
+  // check if partner voted on current
+  const curMovie = state.movies[state.currentIndex];
+  if (curMovie && pv[curMovie.id]) updatePartnerStatus();
+
+  // check done
+  if (Object.keys(pv).length >= state.movies.length && Object.keys(state.myVotes).length >= state.movies.length) {
+    showDone();
+  }
+}
+
+function saveMyVote(movieId, vote) {
+  const room = loadRoom(state.roomId);
+  if (!room) return;
+  if (state.myId === 'host') room.host.votes[movieId] = vote;
+  else room.guest.votes[movieId] = vote;
+  saveRoom(room);
+  state.myVotes[movieId] = vote;
+
+  // check for immediate match
+  if (vote === 'like' && state.partnerVotes[movieId] === 'like') {
+    const movie = MOVIES.find(m => m.id === movieId);
+    if (movie && !state.matches.find(m => m.id === movieId)) {
+      state.matches.push(movie);
+      showMatchOverlay(movie);
+    }
+  }
+}
+
+// ══════════════════════════════════════
+// GAME LOGIC
+// ══════════════════════════════════════
+function startGame() {
+  state.phase = 'game';
+  document.getElementById('p1-name').textContent = state.myName;
+  document.getElementById('p2-name').textContent = state.partnerName;
+  showPhase('game');
+  renderCards();
+  startPolling();
+}
+
+function renderCards() {
+  const stack = document.getElementById('card-stack');
+  stack.innerHTML = '';
+  const total = state.movies.length;
+  for (let i = Math.min(state.currentIndex + 2, total - 1); i >= state.currentIndex; i--) {
+    const movie = state.movies[i];
+    const card = buildCard(movie);
+    const diff = i - state.currentIndex;
+    if (diff === 0) card.classList.add('top');
+    else if (diff === 1) card.classList.add('behind-1');
+    else card.classList.add('behind-2');
+    stack.appendChild(card);
+  }
+  updateProgress();
+  updatePartnerStatus();
+  if (state.currentIndex < total) attachDrag(stack.querySelector('.top'));
+}
+
+function buildCard(movie) {
+  const card = document.createElement('div');
+  card.className = 'movie-card';
+  card.dataset.id = movie.id;
+  card.innerHTML = `
+    <div class="poster-placeholder">${movie.emoji}</div>
+    <div class="swipe-indicator like-indicator">❤ SIM</div>
+    <div class="swipe-indicator nope-indicator">✕ NÃO</div>
+    <div class="card-body">
+      <div class="card-meta">
+        <span class="genre-tag">${movie.genre}</span>
+        <span class="year-tag">${movie.year}</span>
+        <span class="rating">★ ${movie.rating}</span>
+      </div>
+      <div class="card-title">${movie.title}</div>
+      <div class="card-synopsis">${movie.synopsis}</div>
+    </div>
+  `;
+  return card;
+}
+
+function swipe(dir) {
+  const stack = document.getElementById('card-stack');
+  const topCard = stack.querySelector('.top');
+  if (!topCard) return;
+  const movie = state.movies[state.currentIndex];
+  const vote = dir === 'right' ? 'like' : 'nope';
+  saveMyVote(movie.id, vote);
+
+  // animate out
+  const x = dir === 'right' ? 600 : -600;
+  topCard.style.transition = 'transform .45s ease, opacity .45s';
+  topCard.style.transform = `translateX(${x}px) rotate(${dir==='right'?20:-20}deg)`;
+  topCard.style.opacity = '0';
+
+  state.currentIndex++;
+  setTimeout(() => {
+    if (state.currentIndex >= state.movies.length) { showDone(); return; }
+    renderCards();
+  }, 300);
+}
+
+// ── DRAG ──
+function attachDrag(card) {
+  if (!card) return;
+  let startX, startY, moving = false;
+
+  function onStart(x, y) {
+    startX = x; startY = y; moving = true;
+    card.style.transition = 'none';
+  }
+  function onMove(x, y) {
+    if (!moving) return;
+    const dx = x - startX, dy = y - startY;
+    const rot = dx * 0.07;
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    const like = card.querySelector('.like-indicator');
+    const nope = card.querySelector('.nope-indicator');
+    like.style.opacity = Math.max(0, Math.min(1, dx / 80));
+    nope.style.opacity = Math.max(0, Math.min(1, -dx / 80));
+  }
+  function onEnd(x) {
+    if (!moving) return;
+    moving = false;
+    const dx = x - startX;
+    if (dx > 80) swipe('right');
+    else if (dx < -80) swipe('left');
+    else {
+      card.style.transition = 'transform .35s ease';
+      card.style.transform = '';
+      card.querySelector('.like-indicator').style.opacity = 0;
+      card.querySelector('.nope-indicator').style.opacity = 0;
+    }
+  }
+
+  card.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => { if (moving) onMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', e => onEnd(e.clientX));
+
+  card.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, {passive:true});
+  card.addEventListener('touchmove', e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, {passive:true});
+  card.addEventListener('touchend', e => { const t = e.changedTouches[0]; onEnd(t.clientX); });
+}
+
+function updateProgress() {
+  const total = state.movies.length;
+  const done = state.currentIndex;
+  document.getElementById('progress-info').textContent = `${done} / ${total} filmes`;
+  document.getElementById('progress-fill').style.width = `${(done/total)*100}%`;
+}
+
+function updatePartnerStatus() {
+  const el = document.getElementById('partner-status');
+  const movie = state.movies[state.currentIndex];
+  if (!movie) return;
+  const pv = state.partnerVotes[movie.id];
+  if (pv) {
+    const icon = pv === 'like' ? '❤️' : '💔';
+    el.textContent = `${state.partnerName} já votou neste filme ${icon}`;
+    el.className = 'partner-status partner-voted';
+  } else {
+    el.textContent = `Aguardando voto de ${state.partnerName}…`;
+    el.className = 'partner-status';
+  }
+}
+
+// ══════════════════════════════════════
+// MATCH
+// ══════════════════════════════════════
+function showMatchOverlay(movie) {
+  const el = document.getElementById('match-overlay');
+  document.getElementById('match-movie-title-el').textContent = movie.title;
+  const poster = document.getElementById('match-poster-el');
+  poster.textContent = movie.emoji;
+  poster.style.fontSize = '5rem';
+  el.classList.add('show');
+  spawnConfetti();
+}
+
+function closeMatch() {
+  document.getElementById('match-overlay').classList.remove('show');
+  document.getElementById('confetti-wrap').innerHTML = '';
+}
+
+function spawnConfetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = '';
+  const colors = ['#c94fff','#ff6b6b','#ffd166','#2ecc71','#00b4d8'];
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    const size = Math.random() * 10 + 5;
+    s.style.cssText = `
+      position:absolute;
+      left:${Math.random()*100}%;
+      top:-${size}px;
+      width:${size}px; height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation: confettiFall ${1.5+Math.random()*2}s linear ${Math.random()*.8}s forwards;
+    `;
+    wrap.appendChild(s);
+  }
+  const style = document.getElementById('confetti-style') || document.createElement('style');
+  style.id = 'confetti-style';
+  style.textContent = `@keyframes confettiFall { to { transform: translateY(105vh) rotate(${Math.random()>0.5?'':'- '}720deg); opacity:0; } }`;
+  document.head.appendChild(style);
+}
+
+// ══════════════════════════════════════
+// DONE
+// ══════════════════════════════════════
+function showDone() {
+  clearInterval(pollTimer);
+  state.phase = 'done';
+  showPhase('done');
+  const list = document.getElementById('matches-list');
+  list.innerHTML = '';
+  const desc = document.getElementById('done-desc');
+  if (state.matches.length === 0) {
+    desc.textContent = 'Nenhum filme em comum desta vez. Tentem novamente!';
+    list.innerHTML = '<p style="color:var(--muted); text-align:center; font-size:.85rem; padding:1rem">😅 Gostos muito diferentes...</p>';
+  } else {
+    desc.textContent = `${state.matches.length} filme${state.matches.length>1?'s':''} em comum!`;
+    state.matches.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'match-item';
+      item.innerHTML = `
+        <div class="match-item-poster">${m.emoji}</div>
+        <div class="match-item-info">
+          <h4>${m.title}</h4>
+          <p>${m.genre} · ${m.year} · ★ ${m.rating}</p>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  }
+}
+
+// ══════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════
+function showPhase(phase) {
+  state.phase = phase;
+  document.getElementById('lobby').classList.add('hidden');
+  document.getElementById('waiting').classList.add('hidden');
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('done-screen').classList.add('hidden');
+  if (phase === 'lobby') document.getElementById('lobby').classList.remove('hidden');
+  else if (phase === 'waiting') document.getElementById('waiting').classList.remove('hidden');
+  else if (phase === 'game') document.getElementById('game').style.display = 'block';
+  else if (phase === 'done') document.getElementById('done-screen').classList.remove('hidden');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(state.roomId).then(() => showToast('Código copiado! Mande para seu par 💜'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function resetApp() {
+  clearInterval(pollTimer);
+  state = { roomId:null, myId:null, myName:'', partnerName:'', isHost:false,
+    movies:[], currentIndex:0, myVotes:{}, partnerVotes:{}, matches:[], phase:'lobby' };
+  document.getElementById('create-name').value = '';
+  document.getElementById('join-name').value = '';
+  document.getElementById('join-code').value = '';
+  showPhase('lobby');
+}
+
+function shuffleArr(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+</script>
+</body>
+</html>
